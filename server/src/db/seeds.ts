@@ -1,5 +1,7 @@
 import Database from 'better-sqlite3';
 import crypto from 'crypto';
+import { seedGearLibrary } from './gearLibrarySeed';
+import { seedMealTemplates } from './mealTemplateSeed';
 
 function isOidcOnlyConfigured(): boolean {
   if (process.env.OIDC_ONLY !== 'true') return false;
@@ -77,6 +79,7 @@ function seedAddons(db: Database.Database): void {
       { id: 'atlas', name: 'Atlas', description: 'World map of your visited countries with travel stats', type: 'global', icon: 'Globe', enabled: 1, sort_order: 11 },
       { id: 'mcp', name: 'MCP', description: 'Model Context Protocol for AI assistant integration', type: 'integration', icon: 'Terminal', enabled: 0, sort_order: 12 },
       { id: 'collab', name: 'Collab', description: 'Notes, polls, and live chat for trip collaboration', type: 'trip', icon: 'Users', enabled: 1, sort_order: 6 },
+      { id: 'gear_library', name: 'Gear Library', description: 'System-wide gear items, containers & vehicles for packing plans', type: 'global', icon: 'Package', enabled: 1, sort_order: 12 },
     ];
     const insertAddon = db.prepare('INSERT OR IGNORE INTO addons (id, name, description, type, icon, enabled, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)');
     for (const a of defaultAddons) insertAddon.run(a.id, a.name, a.description, a.type, a.icon, a.enabled, a.sort_order);
@@ -90,6 +93,8 @@ function runSeeds(db: Database.Database): void {
   seedAdminAccount(db);
   seedCategories(db);
   seedAddons(db);
+  seedGearLibrary(db);
+  seedMealTemplates(db);
 }
 
 export { runSeeds };

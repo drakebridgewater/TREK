@@ -24,6 +24,8 @@ export interface Trip {
   is_archived: boolean
   reminder_days: number
   owner_id: number
+  packing_mode: 'simple' | 'full'
+  party_size: number | null
   created_at: string
   updated_at: string
 }
@@ -381,4 +383,187 @@ export interface MergedItem {
   type: 'assignment' | 'note' | 'place' | 'transport'
   sortKey: number
   data: Assignment | DayNote | Reservation
+}
+
+// Gear library types
+
+export interface GearTag {
+  id: number
+  name: string
+  color: string
+  created_at?: string
+}
+
+export interface GearItem {
+  id: number
+  name: string
+  description: string | null
+  notes: string | null
+  is_personal: number
+  is_food: number
+  serving_unit: string | null
+  quantity_formula: 'fixed' | 'per_night' | 'per_person' | 'per_person_per_night'
+  base_quantity: number
+  created_by: number | null
+  created_at?: string
+  updated_at?: string
+  tags: GearTag[]
+}
+
+export interface GearContainer {
+  id: number
+  name: string
+  description: string | null
+  capacity_notes: string | null
+  is_personal: number
+  created_by: number | null
+  created_at?: string
+  updated_at?: string
+  tags: GearTag[]
+}
+
+export interface GearVehicle {
+  id: number
+  name: string
+  description: string | null
+  created_by: number | null
+  created_at?: string
+  updated_at?: string
+  tags: GearTag[]
+}
+
+export interface GearTemplateItem {
+  id: number
+  template_id: number
+  gear_item_id: number
+  quantity: number
+  quantity_formula: string | null
+  sort_order: number
+  item: GearItem
+}
+
+export interface GearTemplateContainer {
+  id: number
+  template_id: number
+  gear_container_id: number
+  sort_order: number
+  container: GearContainer
+  assignments: number[]  // template_item IDs assigned to this container
+}
+
+export interface GearTemplate {
+  id: number
+  name: string
+  description: string | null
+  created_by: number | null
+  created_at?: string
+  updated_at?: string
+  tags: GearTag[]
+  item_count?: number
+  container_count?: number
+  // Detail view only
+  items?: GearTemplateItem[]
+  containers?: GearTemplateContainer[]
+}
+
+// Trip guest (informational only — does not affect quantity calculations)
+export interface TripGuest {
+  id: number
+  trip_id: number
+  name: string
+  days_present: number
+  meals_count: number
+  notes: string | null
+  created_at?: string
+}
+
+// Trip packing plan (full mode)
+export interface TripPlanItem {
+  id: number
+  plan_id: number
+  gear_item_id: number | null
+  custom_name: string | null
+  custom_notes: string | null
+  checked: number
+  quantity: number
+  container_id: number | null
+  container_override: number
+  directly_in_vehicle: number
+  sort_order: number
+  created_at?: string
+  name: string  // resolved: custom_name ?? gear_item.name
+}
+
+export interface TripPlanContainer {
+  id: number
+  plan_id: number
+  gear_container_id: number | null
+  custom_name: string | null
+  person_label: string | null
+  sort_order: number
+  created_at?: string
+  name: string  // resolved: custom_name ?? gear_container.name
+  tags: GearTag[]
+  items: TripPlanItem[]
+}
+
+export interface TripPackingPlan {
+  id: number
+  trip_id: number
+  vehicle_id: number | null
+  vehicle: GearVehicle | null
+  containers: TripPlanContainer[]
+  unassigned_items: TripPlanItem[]
+  vehicle_direct_items: TripPlanItem[]
+}
+
+// Meal planning types
+export interface TripMealItem {
+  id: number
+  meal_id: number
+  gear_item_id: number | null
+  custom_food_name: string | null
+  quantity_per_person: number
+  unit: string | null
+  notes: string | null
+  sort_order: number
+  name: string  // resolved
+}
+
+export interface TripMeal {
+  id: number
+  trip_id: number
+  day_id: number
+  meal_template_id: number | null
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  name: string | null
+  notes: string | null
+  sort_order: number
+  created_at?: string
+  items: TripMealItem[]
+}
+
+export interface MealTemplateItem {
+  id: number
+  meal_template_id: number
+  gear_item_id: number | null
+  custom_food_name: string | null
+  quantity_per_person: number
+  unit: string | null
+  notes: string | null
+  sort_order: number
+  name: string  // resolved: custom_food_name || gear_item.name
+}
+
+export interface MealTemplate {
+  id: number
+  name: string
+  description: string | null
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  notes: string | null
+  created_by: number | null
+  created_at?: string
+  updated_at?: string
+  item_count?: number
+  items?: MealTemplateItem[]
 }

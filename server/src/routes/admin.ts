@@ -550,7 +550,7 @@ router.put('/addons/:id', (req: Request, res: Response) => {
   res.json({ addon: { ...updated, enabled: !!updated.enabled, config: JSON.parse(updated.config || '{}') } });
 });
 
-router.get('/mcp-tokens', (req: Request, res: Response) => {
+router.get('/mcp-tokens', (_req: Request, res: Response) => {
   const tokens = db.prepare(`
     SELECT t.id, t.name, t.token_prefix, t.created_at, t.last_used_at, t.user_id, u.username
     FROM mcp_tokens t
@@ -581,14 +581,48 @@ router.post('/rotate-jwt-secret', (req: Request, res: Response) => {
   }
   updateJwtSecret(newSecret);
   writeAudit({
-    user_id: authReq.user?.id ?? null,
-    username: authReq.user?.username ?? 'unknown',
+    userId: authReq.user.id,
     action: 'admin.rotate_jwt_secret',
-    target_type: 'system',
-    target_id: null,
-    details: null,
+    resource: 'system',
     ip: getClientIp(req),
   });
+  res.json({ success: true });
+});
+
+// ─── User permissions ─────────────────────────────────────────────────────────
+
+router.get('/users/:id/permissions', (req: Request, res: Response) => {
+  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const permissions = db.prepare(
+    'SELECT id, permission, granted_by, granted_at FROM user_permissions WHERE user_id = ? ORDER BY granted_at ASC'
+  ).all(req.params.id);
+  res.json({ permissions });
+});
+
+router.post('/users/:id/permissions', (req: Request, res: Response) => {
+  const authReq = req as AuthRequest;
+  const user = db.prepare('SELECT id FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const { permission } = req.body;
+  if (!permission?.trim()) return res.status(400).json({ error: 'permission is required' });
+  try {
+    const result = db.prepare(
+      'INSERT OR IGNORE INTO user_permissions (user_id, permission, granted_by) VALUES (?, ?, ?)'
+    ).run(req.params.id, permission.trim(), authReq.user.id);
+    if (result.changes === 0) return res.status(409).json({ error: 'Permission already granted' });
+    const perm = db.prepare('SELECT * FROM user_permissions WHERE user_id = ? AND permission = ?').get(req.params.id, permission.trim());
+    res.status(201).json({ permission: perm });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to grant permission' });
+  }
+});
+
+router.delete('/users/:id/permissions/:permission', (req: Request, res: Response) => {
+  const result = db.prepare(
+    'DELETE FROM user_permissions WHERE user_id = ? AND permission = ?'
+  ).run(req.params.id, req.params.permission);
+  if (result.changes === 0) return res.status(404).json({ error: 'Permission not found' });
   res.json({ success: true });
 });
 

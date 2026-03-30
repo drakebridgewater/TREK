@@ -357,6 +357,235 @@ function createTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_collab_messages_trip ON collab_messages(trip_id);
   `);
 
+  // Gear library & packing plan tables
+  db.exec(`
+    -- General-purpose sub-admin permissions
+    CREATE TABLE IF NOT EXISTS user_permissions (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      permission  TEXT NOT NULL,
+      granted_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      granted_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, permission)
+    );
+    CREATE INDEX IF NOT EXISTS idx_user_permissions_user ON user_permissions(user_id);
+
+    -- System-wide gear tags (separate from user-scoped place tags)
+    CREATE TABLE IF NOT EXISTS gear_tags (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      name       TEXT NOT NULL UNIQUE,
+      color      TEXT NOT NULL DEFAULT '#6366f1',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Global gear library: items
+    CREATE TABLE IF NOT EXISTS gear_items (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      name             TEXT NOT NULL,
+      description      TEXT,
+      notes            TEXT,
+      is_personal      INTEGER NOT NULL DEFAULT 0,
+      is_food          INTEGER NOT NULL DEFAULT 0,
+      serving_unit     TEXT,
+      quantity_formula TEXT NOT NULL DEFAULT 'fixed',
+      base_quantity    INTEGER NOT NULL DEFAULT 1,
+      created_by       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_items_name ON gear_items(name);
+
+    -- Global gear library: containers
+    CREATE TABLE IF NOT EXISTS gear_containers (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      name           TEXT NOT NULL,
+      description    TEXT,
+      capacity_notes TEXT,
+      is_personal    INTEGER NOT NULL DEFAULT 0,
+      created_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Global gear library: vehicles
+    CREATE TABLE IF NOT EXISTS gear_vehicles (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT NOT NULL,
+      description TEXT,
+      created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Ordered tag junction tables
+    CREATE TABLE IF NOT EXISTS gear_item_tags (
+      gear_item_id INTEGER NOT NULL REFERENCES gear_items(id) ON DELETE CASCADE,
+      tag_id       INTEGER NOT NULL REFERENCES gear_tags(id) ON DELETE CASCADE,
+      sort_order   INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (gear_item_id, tag_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_item_tags_item ON gear_item_tags(gear_item_id);
+
+    CREATE TABLE IF NOT EXISTS gear_container_tags (
+      gear_container_id INTEGER NOT NULL REFERENCES gear_containers(id) ON DELETE CASCADE,
+      tag_id            INTEGER NOT NULL REFERENCES gear_tags(id) ON DELETE CASCADE,
+      sort_order        INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (gear_container_id, tag_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_container_tags_container ON gear_container_tags(gear_container_id);
+
+    CREATE TABLE IF NOT EXISTS gear_vehicle_tags (
+      gear_vehicle_id INTEGER NOT NULL REFERENCES gear_vehicles(id) ON DELETE CASCADE,
+      tag_id          INTEGER NOT NULL REFERENCES gear_tags(id) ON DELETE CASCADE,
+      sort_order      INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (gear_vehicle_id, tag_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_vehicle_tags_vehicle ON gear_vehicle_tags(gear_vehicle_id);
+
+    -- Packing templates
+    CREATE TABLE IF NOT EXISTS gear_templates (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT NOT NULL,
+      description TEXT,
+      created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS gear_template_tags (
+      gear_template_id INTEGER NOT NULL REFERENCES gear_templates(id) ON DELETE CASCADE,
+      tag_id           INTEGER NOT NULL REFERENCES gear_tags(id) ON DELETE CASCADE,
+      sort_order       INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (gear_template_id, tag_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_template_tags_template ON gear_template_tags(gear_template_id);
+
+    CREATE TABLE IF NOT EXISTS gear_template_items (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id      INTEGER NOT NULL REFERENCES gear_templates(id) ON DELETE CASCADE,
+      gear_item_id     INTEGER NOT NULL REFERENCES gear_items(id) ON DELETE CASCADE,
+      quantity         INTEGER NOT NULL DEFAULT 1,
+      quantity_formula TEXT,
+      sort_order       INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_template_items_template ON gear_template_items(template_id);
+
+    CREATE TABLE IF NOT EXISTS gear_template_containers (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id       INTEGER NOT NULL REFERENCES gear_templates(id) ON DELETE CASCADE,
+      gear_container_id INTEGER NOT NULL REFERENCES gear_containers(id) ON DELETE CASCADE,
+      sort_order        INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_gear_template_containers_template ON gear_template_containers(template_id);
+
+    CREATE TABLE IF NOT EXISTS gear_template_assignments (
+      template_item_id      INTEGER NOT NULL REFERENCES gear_template_items(id) ON DELETE CASCADE,
+      template_container_id INTEGER NOT NULL REFERENCES gear_template_containers(id) ON DELETE CASCADE,
+      PRIMARY KEY (template_item_id, template_container_id)
+    );
+
+    -- Trip guests (partial attendees — informational only)
+    CREATE TABLE IF NOT EXISTS trip_guests (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      trip_id      INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+      name         TEXT NOT NULL,
+      days_present INTEGER NOT NULL DEFAULT 1,
+      meals_count  INTEGER NOT NULL DEFAULT 0,
+      notes        TEXT,
+      created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_trip_guests_trip ON trip_guests(trip_id);
+
+    -- Trip packing plan
+    CREATE TABLE IF NOT EXISTS trip_packing_plans (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      trip_id    INTEGER NOT NULL UNIQUE REFERENCES trips(id) ON DELETE CASCADE,
+      vehicle_id INTEGER REFERENCES gear_vehicles(id) ON DELETE SET NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS trip_plan_containers (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      plan_id           INTEGER NOT NULL REFERENCES trip_packing_plans(id) ON DELETE CASCADE,
+      gear_container_id INTEGER REFERENCES gear_containers(id) ON DELETE SET NULL,
+      custom_name       TEXT,
+      person_label      TEXT,
+      sort_order        INTEGER NOT NULL DEFAULT 0,
+      created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_trip_plan_containers_plan ON trip_plan_containers(plan_id);
+
+    CREATE TABLE IF NOT EXISTS trip_plan_items (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      plan_id             INTEGER NOT NULL REFERENCES trip_packing_plans(id) ON DELETE CASCADE,
+      gear_item_id        INTEGER REFERENCES gear_items(id) ON DELETE SET NULL,
+      custom_name         TEXT,
+      custom_notes        TEXT,
+      checked             INTEGER NOT NULL DEFAULT 0,
+      quantity            INTEGER NOT NULL DEFAULT 1,
+      container_id        INTEGER REFERENCES trip_plan_containers(id) ON DELETE SET NULL,
+      container_override  INTEGER NOT NULL DEFAULT 0,
+      directly_in_vehicle INTEGER NOT NULL DEFAULT 0,
+      sort_order          INTEGER NOT NULL DEFAULT 0,
+      created_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_trip_plan_items_plan ON trip_plan_items(plan_id);
+    CREATE INDEX IF NOT EXISTS idx_trip_plan_items_container ON trip_plan_items(container_id);
+
+    -- Global meal templates
+    CREATE TABLE IF NOT EXISTS meal_templates (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      name        TEXT NOT NULL,
+      description TEXT,
+      meal_type   TEXT NOT NULL DEFAULT 'dinner',
+      notes       TEXT,
+      created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_meal_templates_meal_type ON meal_templates(meal_type);
+
+    CREATE TABLE IF NOT EXISTS meal_template_items (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      meal_template_id    INTEGER NOT NULL REFERENCES meal_templates(id) ON DELETE CASCADE,
+      gear_item_id        INTEGER REFERENCES gear_items(id) ON DELETE SET NULL,
+      custom_food_name    TEXT,
+      quantity_per_person REAL NOT NULL DEFAULT 1,
+      unit                TEXT,
+      notes               TEXT,
+      sort_order          INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_meal_template_items_template ON meal_template_items(meal_template_id);
+
+    -- Meal planning (per day)
+    CREATE TABLE IF NOT EXISTS trip_meals (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      trip_id             INTEGER NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+      day_id              INTEGER NOT NULL REFERENCES days(id) ON DELETE CASCADE,
+      meal_template_id    INTEGER REFERENCES meal_templates(id) ON DELETE SET NULL,
+      meal_type           TEXT NOT NULL DEFAULT 'dinner',
+      name                TEXT,
+      notes               TEXT,
+      sort_order          INTEGER NOT NULL DEFAULT 0,
+      created_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_trip_meals_day ON trip_meals(day_id);
+    CREATE INDEX IF NOT EXISTS idx_trip_meals_trip ON trip_meals(trip_id);
+
+    CREATE TABLE IF NOT EXISTS trip_meal_items (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      meal_id             INTEGER NOT NULL REFERENCES trip_meals(id) ON DELETE CASCADE,
+      gear_item_id        INTEGER REFERENCES gear_items(id) ON DELETE SET NULL,
+      custom_food_name    TEXT,
+      quantity_per_person REAL NOT NULL DEFAULT 1,
+      unit                TEXT,
+      notes               TEXT,
+      sort_order          INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_trip_meal_items_meal ON trip_meal_items(meal_id);
+  `);
+
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_places_trip_id ON places(trip_id);
     CREATE INDEX IF NOT EXISTS idx_places_category_id ON places(category_id);

@@ -14,6 +14,7 @@ interface Addon {
   id: string
   name: string
   description: string
+  type: string
   icon: string
   enabled: boolean
 }
@@ -171,7 +172,7 @@ export default function AddonManager({ bagTrackingEnabled, onToggleBagTracking }
 
 interface AddonRowProps {
   addon: Addon
-  onToggle: (addonId: string) => void
+  onToggle: (addon: Addon) => void
   t: (key: string) => string
 }
 

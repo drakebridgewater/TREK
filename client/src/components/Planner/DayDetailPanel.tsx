@@ -7,6 +7,7 @@ const RES_TYPE_COLORS = { flight: '#3b82f6', hotel: '#8b5cf6', restaurant: '#ef4
 import { weatherApi, accommodationsApi } from '../../api/client'
 import { useCanDo } from '../../store/permissionsStore'
 import { useTripStore } from '../../store/tripStore'
+import DayMealsSection from './DayMealsSection'
 import CustomSelect from '../shared/CustomSelect'
 import CustomTimePicker from '../shared/CustomTimePicker'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -589,6 +590,10 @@ export default function DayDetailPanel({ day, days, places, categories = [], tri
               document.body
             )}
           </div>
+
+          {/* ── Meals ── */}
+          <DayMealsSection tripId={tripId} dayId={day.id} />
+
         </div>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>

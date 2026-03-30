@@ -277,6 +277,122 @@ export const collabApi = {
   linkPreview: (tripId: number | string, url: string) => apiClient.get(`/trips/${tripId}/collab/link-preview?url=${encodeURIComponent(url)}`).then(r => r.data),
 }
 
+export const gearApi = {
+  // Tags
+  listTags: () => apiClient.get('/gear/tags').then(r => r.data),
+  createTag: (data: Record<string, unknown>) => apiClient.post('/gear/tags', data).then(r => r.data),
+  updateTag: (id: number, data: Record<string, unknown>) => apiClient.put(`/gear/tags/${id}`, data).then(r => r.data),
+  deleteTag: (id: number) => apiClient.delete(`/gear/tags/${id}`).then(r => r.data),
+  // Items
+  listItems: () => apiClient.get('/gear/items').then(r => r.data),
+  getItem: (id: number) => apiClient.get(`/gear/items/${id}`).then(r => r.data),
+  createItem: (data: Record<string, unknown>) => apiClient.post('/gear/items', data).then(r => r.data),
+  updateItem: (id: number, data: Record<string, unknown>) => apiClient.put(`/gear/items/${id}`, data).then(r => r.data),
+  setItemTags: (id: number, tagIds: number[]) => apiClient.post(`/gear/items/${id}/tags`, { tag_ids: tagIds }).then(r => r.data),
+  deleteItem: (id: number) => apiClient.delete(`/gear/items/${id}`).then(r => r.data),
+  // Containers
+  listContainers: () => apiClient.get('/gear/containers').then(r => r.data),
+  getContainer: (id: number) => apiClient.get(`/gear/containers/${id}`).then(r => r.data),
+  createContainer: (data: Record<string, unknown>) => apiClient.post('/gear/containers', data).then(r => r.data),
+  updateContainer: (id: number, data: Record<string, unknown>) => apiClient.put(`/gear/containers/${id}`, data).then(r => r.data),
+  setContainerTags: (id: number, tagIds: number[]) => apiClient.post(`/gear/containers/${id}/tags`, { tag_ids: tagIds }).then(r => r.data),
+  deleteContainer: (id: number) => apiClient.delete(`/gear/containers/${id}`).then(r => r.data),
+  // Vehicles
+  listVehicles: () => apiClient.get('/gear/vehicles').then(r => r.data),
+  getVehicle: (id: number) => apiClient.get(`/gear/vehicles/${id}`).then(r => r.data),
+  createVehicle: (data: Record<string, unknown>) => apiClient.post('/gear/vehicles', data).then(r => r.data),
+  updateVehicle: (id: number, data: Record<string, unknown>) => apiClient.put(`/gear/vehicles/${id}`, data).then(r => r.data),
+  setVehicleTags: (id: number, tagIds: number[]) => apiClient.post(`/gear/vehicles/${id}/tags`, { tag_ids: tagIds }).then(r => r.data),
+  deleteVehicle: (id: number) => apiClient.delete(`/gear/vehicles/${id}`).then(r => r.data),
+  // Templates
+  listTemplates: () => apiClient.get('/gear/templates').then(r => r.data),
+  getTemplate: (id: number) => apiClient.get(`/gear/templates/${id}`).then(r => r.data),
+  createTemplate: (data: Record<string, unknown>) => apiClient.post('/gear/templates', data).then(r => r.data),
+  updateTemplate: (id: number, data: Record<string, unknown>) => apiClient.put(`/gear/templates/${id}`, data).then(r => r.data),
+  setTemplateTags: (id: number, tagIds: number[]) => apiClient.post(`/gear/templates/${id}/tags`, { tag_ids: tagIds }).then(r => r.data),
+  deleteTemplate: (id: number) => apiClient.delete(`/gear/templates/${id}`).then(r => r.data),
+  addTemplateItem: (id: number, data: Record<string, unknown>) => apiClient.post(`/gear/templates/${id}/items`, data).then(r => r.data),
+  updateTemplateItem: (id: number, itemId: number, data: Record<string, unknown>) => apiClient.put(`/gear/templates/${id}/items/${itemId}`, data).then(r => r.data),
+  deleteTemplateItem: (id: number, itemId: number) => apiClient.delete(`/gear/templates/${id}/items/${itemId}`).then(r => r.data),
+  addTemplateContainer: (id: number, data: Record<string, unknown>) => apiClient.post(`/gear/templates/${id}/containers`, data).then(r => r.data),
+  updateTemplateContainer: (id: number, containerId: number, data: Record<string, unknown>) => apiClient.put(`/gear/templates/${id}/containers/${containerId}`, data).then(r => r.data),
+  deleteTemplateContainer: (id: number, containerId: number) => apiClient.delete(`/gear/templates/${id}/containers/${containerId}`).then(r => r.data),
+  setTemplateAssignments: (id: number, assignments: { template_item_id: number; template_container_id: number }[]) =>
+    apiClient.put(`/gear/templates/${id}/assignments`, { assignments }).then(r => r.data),
+}
+
+export const packingPlanApi = {
+  get: (tripId: number | string) => apiClient.get(`/trips/${tripId}/packing-plan`).then(r => r.data),
+  init: (tripId: number | string) => apiClient.post(`/trips/${tripId}/packing-plan`).then(r => r.data),
+  update: (tripId: number | string, data: Record<string, unknown>) => apiClient.put(`/trips/${tripId}/packing-plan`, data).then(r => r.data),
+  reset: (tripId: number | string) => apiClient.delete(`/trips/${tripId}/packing-plan`).then(r => r.data),
+  applyTemplate: (tripId: number | string, templateId: number) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/apply-template`, { template_id: templateId }).then(r => r.data),
+  addContainer: (tripId: number | string, data: Record<string, unknown>) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/containers`, data).then(r => r.data),
+  updateContainer: (tripId: number | string, id: number, data: Record<string, unknown>) =>
+    apiClient.put(`/trips/${tripId}/packing-plan/containers/${id}`, data).then(r => r.data),
+  removeContainer: (tripId: number | string, id: number) =>
+    apiClient.delete(`/trips/${tripId}/packing-plan/containers/${id}`).then(r => r.data),
+  addItem: (tripId: number | string, data: Record<string, unknown>) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/items`, data).then(r => r.data),
+  updateItem: (tripId: number | string, id: number, data: Record<string, unknown>) =>
+    apiClient.put(`/trips/${tripId}/packing-plan/items/${id}`, data).then(r => r.data),
+  removeItem: (tripId: number | string, id: number) =>
+    apiClient.delete(`/trips/${tripId}/packing-plan/items/${id}`).then(r => r.data),
+  previewAutoAssign: (tripId: number | string) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/auto-assign`).then(r => r.data),
+  applyAutoAssign: (tripId: number | string) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/apply-auto-assign`).then(r => r.data),
+  syncFood: (tripId: number | string) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/sync-food`).then(r => r.data),
+  // Guests
+  listGuests: (tripId: number | string) =>
+    apiClient.get(`/trips/${tripId}/packing-plan/guests`).then(r => r.data),
+  addGuest: (tripId: number | string, data: Record<string, unknown>) =>
+    apiClient.post(`/trips/${tripId}/packing-plan/guests`, data).then(r => r.data),
+  updateGuest: (tripId: number | string, id: number, data: Record<string, unknown>) =>
+    apiClient.put(`/trips/${tripId}/packing-plan/guests/${id}`, data).then(r => r.data),
+  removeGuest: (tripId: number | string, id: number) =>
+    apiClient.delete(`/trips/${tripId}/packing-plan/guests/${id}`).then(r => r.data),
+}
+
+export const mealsApi = {
+  list: (tripId: number | string, dayId: number | string) =>
+    apiClient.get(`/trips/${tripId}/days/${dayId}/meals`).then(r => r.data),
+  create: (tripId: number | string, dayId: number | string, data: Record<string, unknown>) =>
+    apiClient.post(`/trips/${tripId}/days/${dayId}/meals`, data).then(r => r.data),
+  update: (tripId: number | string, dayId: number | string, id: number, data: Record<string, unknown>) =>
+    apiClient.put(`/trips/${tripId}/days/${dayId}/meals/${id}`, data).then(r => r.data),
+  delete: (tripId: number | string, dayId: number | string, id: number) =>
+    apiClient.delete(`/trips/${tripId}/days/${dayId}/meals/${id}`).then(r => r.data),
+  addItem: (tripId: number | string, dayId: number | string, mealId: number, data: Record<string, unknown>) =>
+    apiClient.post(`/trips/${tripId}/days/${dayId}/meals/${mealId}/items`, data).then(r => r.data),
+  updateItem: (tripId: number | string, dayId: number | string, mealId: number, itemId: number, data: Record<string, unknown>) =>
+    apiClient.put(`/trips/${tripId}/days/${dayId}/meals/${mealId}/items/${itemId}`, data).then(r => r.data),
+  deleteItem: (tripId: number | string, dayId: number | string, mealId: number, itemId: number) =>
+    apiClient.delete(`/trips/${tripId}/days/${dayId}/meals/${mealId}/items/${itemId}`).then(r => r.data),
+}
+
+export const mealTemplatesApi = {
+  list: () => apiClient.get('/meal-templates').then(r => r.data),
+  get: (id: number) => apiClient.get(`/meal-templates/${id}`).then(r => r.data),
+  create: (data: Record<string, unknown>) => apiClient.post('/meal-templates', data).then(r => r.data),
+  update: (id: number, data: Record<string, unknown>) => apiClient.put(`/meal-templates/${id}`, data).then(r => r.data),
+  delete: (id: number) => apiClient.delete(`/meal-templates/${id}`).then(r => r.data),
+  addItem: (id: number, data: Record<string, unknown>) => apiClient.post(`/meal-templates/${id}/items`, data).then(r => r.data),
+  updateItem: (id: number, itemId: number, data: Record<string, unknown>) => apiClient.put(`/meal-templates/${id}/items/${itemId}`, data).then(r => r.data),
+  deleteItem: (id: number, itemId: number) => apiClient.delete(`/meal-templates/${id}/items/${itemId}`).then(r => r.data),
+  applyToTrip: (tripId: number | string, dayId: number | string, templateId: number) =>
+    apiClient.post(`/trips/${tripId}/days/${dayId}/meals/apply-template/${templateId}`).then(r => r.data),
+}
+
+export const adminPermissionsApi = {
+  list: (userId: number) => apiClient.get(`/admin/users/${userId}/permissions`).then(r => r.data),
+  grant: (userId: number, permission: string) => apiClient.post(`/admin/users/${userId}/permissions`, { permission }).then(r => r.data),
+  revoke: (userId: number, permission: string) => apiClient.delete(`/admin/users/${userId}/permissions/${permission}`).then(r => r.data),
+}
+
 export const backupApi = {
   list: () => apiClient.get('/backup/list').then(r => r.data),
   create: () => apiClient.post('/backup/create').then(r => r.data),

@@ -65,6 +65,19 @@ const adminOnly = (req: Request, res: Response, next: NextFunction): void => {
   next();
 };
 
+const gearAdmin = (req: Request, res: Response, next: NextFunction): void => {
+  const authReq = req as AuthRequest;
+  if (authReq.user.role === 'admin') return next();
+  const perm = db.prepare(
+    "SELECT id FROM user_permissions WHERE user_id = ? AND permission = 'gear_admin'"
+  ).get(authReq.user.id);
+  if (!perm) {
+    res.status(403).json({ error: 'Gear admin permission required' });
+    return;
+  }
+  next();
+};
+
 const demoUploadBlock = (req: Request, res: Response, next: NextFunction): void => {
   const authReq = req as AuthRequest;
   if (process.env.DEMO_MODE === 'true' && authReq.user?.email === 'demo@nomad.app') {
@@ -74,4 +87,4 @@ const demoUploadBlock = (req: Request, res: Response, next: NextFunction): void 
   next();
 };
 
-export { authenticate, optionalAuth, adminOnly, demoUploadBlock };
+export { authenticate, optionalAuth, adminOnly, gearAdmin, demoUploadBlock };

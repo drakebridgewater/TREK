@@ -300,3 +300,187 @@ export interface Participant {
   username: string;
   avatar?: string | null;
 }
+
+export interface UserPermission {
+  id: number;
+  user_id: number;
+  permission: string;
+  granted_by?: number | null;
+  granted_at?: string;
+}
+
+export interface GearTag {
+  id: number;
+  name: string;
+  color: string;
+  created_at?: string;
+}
+
+export interface GearItem {
+  id: number;
+  name: string;
+  description?: string | null;
+  notes?: string | null;
+  is_personal: number;
+  is_food: number;
+  serving_unit?: string | null;
+  quantity_formula: string;
+  base_quantity: number;
+  created_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  tags?: GearTag[];
+}
+
+export interface GearContainer {
+  id: number;
+  name: string;
+  description?: string | null;
+  capacity_notes?: string | null;
+  is_personal: number;
+  created_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  tags?: GearTag[];
+}
+
+export interface GearVehicle {
+  id: number;
+  name: string;
+  description?: string | null;
+  created_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  tags?: GearTag[];
+}
+
+export interface GearTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  created_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  tags?: GearTag[];
+  item_count?: number;
+  container_count?: number;
+}
+
+export interface GearTemplateItem {
+  id: number;
+  template_id: number;
+  gear_item_id: number;
+  quantity: number;
+  quantity_formula?: string | null;
+  sort_order: number;
+  item?: GearItem;
+}
+
+export interface GearTemplateContainer {
+  id: number;
+  template_id: number;
+  gear_container_id: number;
+  sort_order: number;
+  container?: GearContainer;
+}
+
+export interface TripGuest {
+  id: number;
+  trip_id: number;
+  name: string;
+  days_present: number;
+  meals_count: number;
+  notes?: string | null;
+  created_at?: string;
+}
+
+export interface TripPackingPlan {
+  id: number;
+  trip_id: number;
+  vehicle_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  vehicle?: GearVehicle | null;
+  containers?: TripPlanContainer[];
+  unassigned_items?: TripPlanItem[];
+  vehicle_direct_items?: TripPlanItem[];
+}
+
+export interface TripPlanContainer {
+  id: number;
+  plan_id: number;
+  gear_container_id?: number | null;
+  custom_name?: string | null;
+  person_label?: string | null;
+  sort_order: number;
+  created_at?: string;
+  name?: string;
+  tags?: GearTag[];
+  items?: TripPlanItem[];
+}
+
+export interface TripPlanItem {
+  id: number;
+  plan_id: number;
+  gear_item_id?: number | null;
+  custom_name?: string | null;
+  custom_notes?: string | null;
+  checked: number;
+  quantity: number;
+  container_id?: number | null;
+  container_override: number;
+  directly_in_vehicle: number;
+  sort_order: number;
+  created_at?: string;
+  name?: string;
+}
+
+export interface TripMeal {
+  id: number;
+  trip_id: number;
+  day_id: number;
+  meal_template_id?: number | null;
+  meal_type: string;
+  name?: string | null;
+  notes?: string | null;
+  sort_order: number;
+  created_at?: string;
+  items?: TripMealItem[];
+}
+
+export interface MealTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  notes?: string | null;
+  created_by?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  item_count?: number;
+  items?: MealTemplateItem[];
+}
+
+export interface MealTemplateItem {
+  id: number;
+  meal_template_id: number;
+  gear_item_id: number | null;
+  custom_food_name: string | null;
+  quantity_per_person: number;
+  unit: string | null;
+  notes: string | null;
+  sort_order: number;
+  name?: string;
+}
+
+export interface TripMealItem {
+  id: number;
+  meal_id: number;
+  gear_item_id?: number | null;
+  custom_food_name?: string | null;
+  quantity_per_person: number;
+  unit?: string | null;
+  notes?: string | null;
+  sort_order: number;
+  name?: string;
+}

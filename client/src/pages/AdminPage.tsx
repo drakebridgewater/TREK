@@ -17,6 +17,8 @@ import PackingTemplateManager from '../components/Admin/PackingTemplateManager'
 import AuditLogPanel from '../components/Admin/AuditLogPanel'
 import AdminMcpTokensPanel from '../components/Admin/AdminMcpTokensPanel'
 import PermissionsPanel from '../components/Admin/PermissionsPanel'
+import GearLibraryManager from '../components/Admin/GearLibraryManager'
+import MealTemplateManager from '../components/Admin/MealTemplateManager'
 import { Users, Map, Briefcase, Shield, Trash2, Edit2, Camera, FileText, Eye, EyeOff, Save, CheckCircle, XCircle, Loader2, UserPlus, ArrowUpCircle, ExternalLink, Download, GitBranch, Sun, Link2, Copy, Plus, RefreshCw, AlertTriangle } from 'lucide-react'
 import CustomSelect from '../components/shared/CustomSelect'
 
@@ -70,6 +72,8 @@ export default function AdminPage(): React.ReactElement {
     { id: 'audit', label: t('admin.tabs.audit') },
     ...(mcpEnabled ? [{ id: 'mcp-tokens', label: t('admin.tabs.mcpTokens') }] : []),
     { id: 'github', label: t('admin.tabs.github') },
+    { id: 'gear', label: 'Gear Library' },
+    { id: 'meal-templates', label: 'Meal Templates' },
   ]
 
   const [activeTab, setActiveTab] = useState<string>('users')
@@ -1183,6 +1187,10 @@ export default function AdminPage(): React.ReactElement {
           {activeTab === 'mcp-tokens' && <AdminMcpTokensPanel />}
 
           {activeTab === 'github' && <GitHubPanel />}
+
+          {activeTab === 'gear' && <GearLibraryManager />}
+
+          {activeTab === 'meal-templates' && <MealTemplateManager />}
         </div>
       </div>
 

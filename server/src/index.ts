@@ -183,6 +183,10 @@ import budgetRoutes from './routes/budget';
 import collabRoutes from './routes/collab';
 import backupRoutes from './routes/backup';
 import oidcRoutes from './routes/oidc';
+import gearRoutes from './routes/gear';
+import packingPlanRoutes from './routes/packingPlan';
+import mealsRoutes from './routes/meals';
+import mealTemplatesRoutes, { applyMealTemplate } from './routes/mealTemplates';
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/oidc', oidcRoutes);
 app.use('/api/trips', tripsRoutes);
@@ -195,16 +199,21 @@ app.use('/api/trips/:tripId/budget', budgetRoutes);
 app.use('/api/trips/:tripId/collab', collabRoutes);
 app.use('/api/trips/:tripId/reservations', reservationsRoutes);
 app.use('/api/trips/:tripId/days/:dayId/notes', dayNotesRoutes);
+app.use('/api/trips/:tripId/days/:dayId/meals', mealsRoutes);
+app.post('/api/trips/:tripId/days/:dayId/meals/apply-template/:templateId', addonAuth, (req, res) => applyMealTemplate(req as AuthRequest, res));
+app.use('/api/trips/:tripId/packing-plan', packingPlanRoutes);
 app.get('/api/health', (req: Request, res: Response) => res.json({ status: 'ok' }));
 app.use('/api', assignmentsRoutes);
 app.use('/api/tags', tagsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/gear', gearRoutes);
+app.use('/api/meal-templates', mealTemplatesRoutes);
 
 // Public addons endpoint (authenticated but not admin-only)
 import { authenticate as addonAuth } from './middleware/auth';
-import {db as addonDb} from './db/database';
-import { Addon } from './types';
+import { db as addonDb } from './db/database';
+import { Addon, AuthRequest } from './types';
 app.get('/api/addons', addonAuth, (req: Request, res: Response) => {
   const addons = addonDb.prepare('SELECT id, name, type, icon, enabled FROM addons WHERE enabled = 1 ORDER BY sort_order').all() as Pick<Addon, 'id' | 'name' | 'type' | 'icon' | 'enabled'>[];
   res.json({ addons: addons.map(a => ({ ...a, enabled: !!a.enabled })) });

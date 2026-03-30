@@ -17,6 +17,8 @@ import { ReservationModal } from '../components/Planner/ReservationModal'
 import MemoriesPanel from '../components/Memories/MemoriesPanel'
 import ReservationsPanel from '../components/Planner/ReservationsPanel'
 import PackingListPanel from '../components/Packing/PackingListPanel'
+import PackingModeToggle from '../components/Packing/PackingModeToggle'
+import PackingPlanPanel from '../components/Packing/PackingPlanPanel'
 import FileManager from '../components/Files/FileManager'
 import BudgetPanel from '../components/Budget/BudgetPanel'
 import CollabPanel from '../components/Collab/CollabPanel'
@@ -58,6 +60,16 @@ export default function TripPlannerPage(): React.ReactElement | null {
   const [tripAccommodations, setTripAccommodations] = useState<Accommodation[]>([])
   const [allowedFileTypes, setAllowedFileTypes] = useState<string | null>(null)
   const [tripMembers, setTripMembers] = useState<TripMember[]>([])
+  const [packingMode, setPackingMode] = useState<'simple' | 'full'>('simple')
+  const [partySizeOverride, setPartySizeOverride] = useState<number | null>(null)
+
+  // Sync packing mode + party size from trip when it loads
+  useEffect(() => {
+    if (trip) {
+      setPackingMode(trip.packing_mode || 'simple')
+      setPartySizeOverride(trip.party_size ?? null)
+    }
+  }, [trip?.id])
 
   const loadAccommodations = useCallback(() => {
     if (tripId) {
@@ -791,7 +803,26 @@ export default function TripPlannerPage(): React.ReactElement | null {
 
         {activeTab === 'packliste' && (
           <div style={{ height: '100%', overflowY: 'auto', overscrollBehavior: 'contain', maxWidth: 1200, margin: '0 auto', width: '100%', padding: '8px 0' }}>
-            <PackingListPanel tripId={tripId} items={packingItems} />
+            <div className="px-4 py-2 flex items-center gap-4">
+              <PackingModeToggle
+                tripId={parseInt(tripId)}
+                mode={packingMode}
+                onChange={setPackingMode}
+              />
+            </div>
+            {packingMode === 'simple' && (
+              <PackingListPanel tripId={tripId} items={packingItems} />
+            )}
+            {packingMode === 'full' && (
+              <div className="px-4 py-2">
+                <PackingPlanPanel
+                  tripId={parseInt(tripId)}
+                  partySizeOverride={partySizeOverride}
+                  members={tripMembers.map(m => ({ id: m.id, username: m.username, avatar_url: m.avatar_url }))}
+                  onPartySizeChange={setPartySizeOverride}
+                />
+              </div>
+            )}
           </div>
         )}
 
